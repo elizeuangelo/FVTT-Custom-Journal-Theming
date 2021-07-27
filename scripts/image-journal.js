@@ -393,8 +393,10 @@ export class ImageJournal extends DocumentSheet {
 								// Re-draw the updated sheet
 								journal.sheet.render(true);
 
-								await journal.sheet.resetPosition();
-								journal.sheet.savePosition();
+								Hooks.once('renderImageJournal', async () => {
+									await journal.sheet.resetPosition();
+									journal.sheet.savePosition();
+								});
 							}
 							const img = html.querySelector('#img').value;
 							const opacity = html.querySelector('#opacity').value;
