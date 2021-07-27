@@ -38,9 +38,9 @@
 		}
 	],
 	"packs": [],
-	"url": "https://github.com/Sanyella/FVTT-Custom-Journal-Theming",
-	"manifest": "https://raw.githubusercontent.com/Sanyella/FVTT-Custom-Journal-Theming/master/module.json",
-	"download": "https://github.com/Sanyella/FVTT-Custom-Journal-Theming/releases/download/1.2.1/custom-journal.zip",
+	"url": "https://github.com/elizeuangelo/FVTT-Custom-Journal-Theming",
+	"manifest": "https://raw.githubusercontent.com/elizeuangelo/FVTT-Custom-Journal-Theming/master/module.json",
+	"download": "https://github.com/elizeuangelo/FVTT-Custom-Journal-Theming/raw/master/custom-journal.zip",
 	"bugs": "https://github.com/Sanyella/FVTT-Custom-Journal-Theming/issues",
 	"compatibleCoreVersion": "0.8.8",
 	"minimumCoreVersion": "0.8.8"
