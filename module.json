@@ -2,7 +2,7 @@
 	"name": "custom-journal",
 	"title": "Custom Journal",
 	"description": "A custom take on the appearance of journal entries.",
-	"version": "1.2.1",
+	"version": "1.3.0",
 	"author": "Sanyella",
 	"scripts": [],
 	"styles": [
@@ -13,14 +13,13 @@
 		"styles/royal-journal.css",
 		"styles/sci-fi-one-journal.css",
 		"styles/sci-fi-two-journal.css",
+		"styles/custom-image.css",
 		"fonts/Anglo-text/stylesheet.css",
 		"fonts/Lovers-Quarrel/stylesheet.css",
 		"fonts/Montserrat-Regular/style.css",
 		"fonts/Play-Regular/style.css"
 	],
-	"esmodules": [
-		"scripts/custom-journal.js"
-	],
+	"esmodules": ["scripts/custom-journal.js"],
 	"languages": [
 		{
 			"lang": "en",
@@ -43,6 +42,6 @@
 	"manifest": "https://raw.githubusercontent.com/Sanyella/FVTT-Custom-Journal-Theming/master/module.json",
 	"download": "https://github.com/Sanyella/FVTT-Custom-Journal-Theming/releases/download/1.2.1/custom-journal.zip",
 	"bugs": "https://github.com/Sanyella/FVTT-Custom-Journal-Theming/issues",
-	"compatibleCoreVersion": "0.7.4",
-	"minimumCoreVersion": "0.6.6"
+	"compatibleCoreVersion": "0.8.8",
+	"minimumCoreVersion": "0.8.8"
 }
