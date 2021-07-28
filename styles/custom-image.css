@@ -21,6 +21,10 @@
 	height: 100%;
 }
 
+.custom-image-app .editor-content {
+	overflow-x: hidden;
+}
+
 .absolute {
 	position: absolute;
 }
@@ -93,9 +97,10 @@
 	width: 20px;
 	height: 20px;
 	position: absolute;
-	bottom: 1px;
+	bottom: 0;
 	right: 0;
 	background: #fff;
+	color: #000;
 	padding: 2px;
 	border: 1px solid #111;
 	border-radius: 4px 0 0 0;
@@ -103,4 +108,8 @@
 
 .custom-image-app .window-resizable-handle i.fas {
 	transform: rotate(45deg);
+}
+
+.custom-image-app .editor-edit {
+	color: black;
 }

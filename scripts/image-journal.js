@@ -26,11 +26,13 @@ export class ImageJournal extends DocumentSheet {
 
 	setDefaultFlags() {
 		this.setDefaultFlag('img', '');
-		this.setDefaultFlag('opacity', 1);
+		this.setDefaultFlag('opacity', '1');
 		this.setDefaultFlag('locked', true);
 		this.setDefaultFlag('draggable', false);
 		this.setDefaultFlag('image_position', { width: 0, height: 0, top: 0, left: 0 });
 		this.setDefaultFlag('editor_position', { width: 0, height: 0, top: 0, left: 0 });
+		this.setDefaultFlag('text-color', '#ffffff');
+		this.setDefaultFlag('editor-rotation', '0');
 	}
 
 	/** @inheritdoc */
@@ -97,6 +99,8 @@ export class ImageJournal extends DocumentSheet {
 			opacity: this.getFlag('opacity'),
 			headerButtons: this._getHeaderButtons(),
 			userButtons: this._getUserButtons(),
+			textcolor: this.getFlag('text-color'),
+			rotation: this.getFlag('editor-rotation'),
 		};
 		windowData.buttons = [...windowData.headerButtons, ...windowData.userButtons];
 		options = mergeObject(options, windowData);
@@ -368,7 +372,9 @@ export class ImageJournal extends DocumentSheet {
 	async _onConfigImage() {
 		this._lock();
 		const img = this.getFlag('img') || '';
-		const opacity = this.object.getFlag('custom-journal', 'opacity');
+		const opacity = this.getFlag('opacity');
+		const textcolor = this.getFlag('text-color');
+		const rotation = this.getFlag('editor-rotation');
 		//const resizable = this.object.getFlag('custom-journal', 'resizable');
 		const html = await getTemplate('modules/custom-journal/templates/customimage-config.html');
 		const journal = this.object;
@@ -377,7 +383,7 @@ export class ImageJournal extends DocumentSheet {
 		const app = new Dialog(
 			{
 				title: `${this.object.name}: Custom Image Configuration`,
-				content: html({ img, opacity, name }),
+				content: html({ img, opacity, name, textcolor, rotation }),
 				buttons: {
 					yes: {
 						icon: `<i class="fas fa-magic"></i>`,
@@ -401,12 +407,16 @@ export class ImageJournal extends DocumentSheet {
 							const img = html.querySelector('#img').value;
 							const opacity = html.querySelector('#opacity').value;
 							const newName = html.querySelector('#name').value;
+							const textcolor = html.querySelector('#textcolor').value;
+							const rotation = html.querySelector('#rotation').value;
 							journal.sheet.setFlag('img', img);
 							journal.sheet.setFlag('opacity', opacity);
 
 							const updates = {};
 							if (newName !== name) updates.name = newName;
 							if (img !== this.getFlag('img')) this.setFlag('img', img);
+							if (textcolor !== this.getFlag('text-color')) this.setFlag('text-color', textcolor);
+							if (rotation !== this.getFlag('editor-rotation')) this.setFlag('editor-rotation', rotation);
 
 							if (Object.keys(updates).length) journal.update(updates);
 
@@ -420,15 +430,24 @@ export class ImageJournal extends DocumentSheet {
 				},
 				default: 'yes',
 				render: (html) => {
-					// Control the opacity range behavior
-					function updateRange() {
-						rangeValue.textContent = ~~(+opacity.value * 100) + '%';
+					function updateRange({ selector, value, str }) {
+						value.textContent = str(selector.value);
 					}
-					const rangeValue = html.querySelector('#opacity+span');
-					const opacity = html.querySelector('#opacity');
-					updateRange();
-					html.querySelector('#opacity').addEventListener('change', (ev) => {
-						updateRange();
+
+					html.querySelectorAll('input[type=range]').forEach((range) => {
+						const value = range.nextElementSibling;
+						if (value.tagName !== 'SPAN') return;
+						const selector = range;
+						let str = (value) => value;
+						if (selector.id === 'opacity') str = (value) => ~~(+value * 100) + '%';
+						if (selector.id === 'rotation') str = (value) => +value + 'deg';
+						const rangeData = {
+							selector,
+							value,
+							str,
+						};
+						updateRange(rangeData);
+						range.addEventListener('change', (ev) => updateRange(rangeData));
 					});
 
 					// Register the File Picker
