@@ -132,7 +132,7 @@ export class ImageJournal extends DocumentSheet {
 		this._activateCoreListeners(html);
 		this.activateListeners(html);
 
-		this._onRender(html, options, renderinner);
+		await this._onRender(html, options, renderinner);
 
 		setTimeout(() => {
 			html.find('.custom-image-buttons a').click((event) => {
