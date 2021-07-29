@@ -32,7 +32,8 @@ export class ImageJournal extends DocumentSheet {
 		this.setDefaultFlag('image_position', { width: 0, height: 0, top: 0, left: 0 });
 		this.setDefaultFlag('editor_position', { width: 0, height: 0, top: 0, left: 0 });
 		this.setDefaultFlag('text-color', '#ffffff');
-		this.setDefaultFlag('editor-rotation', '0');
+		this.setDefaultFlag('image_rotation', '0');
+		this.setDefaultFlag('editor_rotation', '0');
 	}
 
 	/** @inheritdoc */
@@ -100,7 +101,8 @@ export class ImageJournal extends DocumentSheet {
 			headerButtons: this._getHeaderButtons(),
 			userButtons: this._getUserButtons(),
 			textcolor: this.getFlag('text-color'),
-			rotation: this.getFlag('editor-rotation'),
+			editorRotation: this.getFlag('editor_rotation'),
+			imgRotation: this.getFlag('image_rotation'),
 		};
 		windowData.buttons = [...windowData.headerButtons, ...windowData.userButtons];
 		options = mergeObject(options, windowData);
@@ -117,6 +119,7 @@ export class ImageJournal extends DocumentSheet {
 		// If the application already exists in the DOM, replace the inner content
 		if (element.length) {
 			this._replaceHTML(element.find('form div.editor')[0], html.find('form div.editor')[0]);
+			element.find('input[type=hidden]').remove();
 			renderinner = true;
 		}
 		// Otherwise render a new app
@@ -176,8 +179,8 @@ export class ImageJournal extends DocumentSheet {
 		const img = html.find('.background-image');
 		const editor = html.find('#editor');
 		if (!renderinner) {
-			this.handlers.editor_lockhandler = new DraggableElement(this, editor, undefined, true, this.getFlag('editor_position'));
-			this.handlers.image_lockhandler = new DraggableElement(this, img, undefined, true, this.getFlag('image_position'));
+			this.handlers.editor_lockhandler = new DraggableElement(this, editor, undefined, true, true, this.getFlag('editor_position'));
+			this.handlers.image_lockhandler = new DraggableElement(this, img, undefined, true, true, this.getFlag('image_position'));
 			this.handlers.draghandler = new DraggableExtended(this, img);
 		}
 	}
@@ -246,7 +249,7 @@ export class ImageJournal extends DocumentSheet {
 
 	savePosition() {
 		const check = (str, flag) => {
-			const regex = /\d+/;
+			const regex = /-?\d+/;
 			const el = this.element[0].querySelector(str);
 			const el_pos = {
 				width: +regex.exec(el.style.width),
@@ -254,10 +257,11 @@ export class ImageJournal extends DocumentSheet {
 				left: +regex.exec(el.style.left),
 				top: +regex.exec(el.style.top),
 			};
-			this.setFlag(flag, el_pos);
+			this.setFlag(`${flag}_position`, el_pos);
+			this.setFlag(`${flag}_rotation`, regex.exec(el.style.transform)[0]);
 		};
-		check('.background-image', 'image_position');
-		check('#editor', 'editor_position');
+		check('.background-image', 'image');
+		check('#editor', 'editor');
 	}
 
 	async resetPosition() {
@@ -272,7 +276,9 @@ export class ImageJournal extends DocumentSheet {
 			img_pos.width = 600 * ratio;
 		}
 		this.handlers.image_lockhandler.setPosition({ ...img_pos, top: 0, left: 0 });
+		this.handlers.image_lockhandler.setRotation(0);
 		this.handlers.editor_lockhandler.setPosition({ width: 0, height: 0, top: 0, left: 0 });
+		this.handlers.editor_lockhandler.setRotation(0);
 	}
 
 	_getUserButtons() {
@@ -374,7 +380,8 @@ export class ImageJournal extends DocumentSheet {
 		const img = this.getFlag('img') || '';
 		const opacity = this.getFlag('opacity');
 		const textcolor = this.getFlag('text-color');
-		const rotation = this.getFlag('editor-rotation');
+		const imageRotation = this.getFlag('image_rotation');
+		const editorRotation = this.getFlag('editor_rotation');
 		//const resizable = this.object.getFlag('custom-journal', 'resizable');
 		const html = await getTemplate('modules/custom-journal/templates/customimage-config.html');
 		const journal = this.object;
@@ -383,7 +390,7 @@ export class ImageJournal extends DocumentSheet {
 		const app = new Dialog(
 			{
 				title: `${this.object.name}: Custom Image Configuration`,
-				content: html({ img, opacity, name, textcolor, rotation }),
+				content: html({ img, opacity, name, textcolor, imageRotation, editorRotation }),
 				buttons: {
 					yes: {
 						icon: `<i class="fas fa-magic"></i>`,
@@ -393,33 +400,33 @@ export class ImageJournal extends DocumentSheet {
 								const sheet = journal.sheet;
 								// De-register the current sheet class
 								await sheet.close();
-								journal._sheet = null;
-								delete journal.apps[sheet.appId];
 
 								// Re-draw the updated sheet
-								journal.sheet.render(true);
-
-								Hooks.once('renderImageJournal', async () => {
-									await journal.sheet.resetPosition();
-									journal.sheet.savePosition();
-								});
+								sheet.render(true);
 							}
 							const img = html.querySelector('#img').value;
 							const opacity = html.querySelector('#opacity').value;
 							const newName = html.querySelector('#name').value;
-							const textcolor = html.querySelector('#textcolor').value;
-							const rotation = html.querySelector('#rotation').value;
-							journal.sheet.setFlag('img', img);
-							journal.sheet.setFlag('opacity', opacity);
+							const textcolor = html.querySelector('#textcolor').value || '#ffffff';
+							const imageRotation = html.querySelector('#image-rotation').value;
+							const editorRotation = html.querySelector('#editor-rotation').value;
 
 							const updates = {};
 							if (newName !== name) updates.name = newName;
-							if (img !== this.getFlag('img')) this.setFlag('img', img);
+							if (opacity !== this.getFlag('opacity')) journal.sheet.setFlag('opacity', opacity);
 							if (textcolor !== this.getFlag('text-color')) this.setFlag('text-color', textcolor);
-							if (rotation !== this.getFlag('editor-rotation')) this.setFlag('editor-rotation', rotation);
+							if (imageRotation !== this.getFlag('image_rotation')) this.setFlag('image_rotation', imageRotation);
+							if (editorRotation !== this.getFlag('editor_rotation')) this.setFlag('editor_rotation', editorRotation);
 
-							if (Object.keys(updates).length) journal.update(updates);
+							if (Object.keys(updates).length) await journal.update(updates);
 
+							if (img !== this.getFlag('img')) {
+								this.setFlag('img', img);
+								Hooks.once('renderImageJournal', async () => {
+									await sheet.resetPosition();
+									sheet.savePosition();
+								});
+							}
 							renderSheet();
 						},
 					},
@@ -432,6 +439,12 @@ export class ImageJournal extends DocumentSheet {
 				render: (html) => {
 					function updateRange({ selector, value, str }) {
 						value.textContent = str(selector.value);
+					}
+					function updateColor(selector) {
+						const target = selector.dataset?.edit;
+						if (target) {
+							html.querySelector(`#${target}`).value = selector.value;
+						}
 					}
 
 					html.querySelectorAll('input[type=range]').forEach((range) => {
@@ -448,6 +461,11 @@ export class ImageJournal extends DocumentSheet {
 						};
 						updateRange(rangeData);
 						range.addEventListener('change', (ev) => updateRange(rangeData));
+					});
+
+					html.querySelectorAll('input[type=color]').forEach((colorpick) => {
+						updateColor(colorpick);
+						colorpick.addEventListener('change', (ev) => updateColor(colorpick));
 					});
 
 					// Register the File Picker
@@ -482,6 +500,14 @@ export class ImageJournal extends DocumentSheet {
 		const el = this.element.find('.lock-sheet')[0];
 		if (el.text === 'Lock') el.click();
 	}
+
+	activateEditor(name, options = {}, ...args) {
+		mergeObject(options, {
+			preview_styles: false,
+			content_style: `body {color: ${this.getFlag('text-color')}}`,
+		});
+		super.activateEditor(name, options, ...args);
+	}
 }
 
 class DraggableExtended extends Draggable {
@@ -493,13 +519,92 @@ class DraggableExtended extends Draggable {
 }
 
 class DraggableElement extends Draggable {
-	constructor(app, element, handle, resizable = false, position = { left: 0, width: 0, top: 0, height: 0 }) {
+	constructor(app, element, handle, resizable = false, rotation = false, position = { left: 0, width: 0, top: 0, height: 0 }) {
 		super(app, element, handle, resizable);
 
 		// Activate interactivity
 		this.position = position;
+		this.rotation = rotation;
 		this.setPosition(position);
 		this.removeListeners();
+	}
+
+	activateListeners() {
+		super.activateListeners();
+		// Rotation handlers
+		if (!this.rotation) return;
+		let handle = $('<div class="window-rotation-handle"><i class="far fa-circle"></i></div>')[0];
+		this.element.appendChild(handle);
+		// Register handlers
+		this.handlers['rotateDown'] = ['mousedown', (e) => this._onRotateMouseDown(e), false];
+		this.handlers['rotateMove'] = ['mousemove', (e) => this._onRotateMouseMove(e), false];
+		this.handlers['rotateUp'] = ['mouseup', (e) => this._onRotateMouseUp(e), false];
+
+		// Attach the click handler and CSS class
+		handle.addEventListener(...this.handlers.rotateDown);
+		this.handle.classList.add('rotatable');
+	}
+
+	/**
+	 * Handle the initial mouse click which activates dragging behavior for the application
+	 * @private
+	 */
+	_onRotateMouseDown(event) {
+		event.preventDefault();
+		if (event.target.tagName !== 'I') return;
+
+		// Limit dragging to 60 updates per second
+		const now = Date.now();
+		if (now - this._moveTime < 1000 / 60) return;
+		this._moveTime = now;
+
+		const el = this.element;
+		this.position = { left: el.offsetLeft, top: el.offsetTop, width: el.offsetWidth, height: el.offsetHeight };
+
+		// Record initial rotation
+		this.rotation = /-?\d+/.exec(this.element.style.transform)[0];
+		const pos = this.element.getBoundingClientRect();
+		this._initial = { x: pos.x + pos.width / 2, y: pos.y + pos.height / 2 };
+
+		// Add temporary handlers
+		window.addEventListener(...this.handlers.rotateMove);
+		window.addEventListener(...this.handlers.rotateUp);
+	}
+
+	/**
+	 * Move the window with the mouse, bounding the movement to ensure the window stays within bounds of the viewport
+	 * @private
+	 */
+	_onRotateMouseMove(event) {
+		event.preventDefault();
+
+		const diffX = (this._initial.x - event.clientX) / this.position.width;
+		const diffY = (this._initial.y - event.clientY) / this.position.height;
+		const tan = diffY / diffX;
+
+		let atan = (Math.atan(tan) * 180) / Math.PI;
+		if (diffY > 0 && diffX > 0) {
+			atan += 180;
+		} else if (diffY < 0 && diffX > 0) {
+			atan -= 180;
+		}
+
+		this.setRotation(atan);
+	}
+
+	setRotation(deg) {
+		this.element.style.transform = `rotate(${deg}deg)`;
+	}
+
+	/**
+	 * Conclude the dragging behavior when the mouse is release, setting the final position and removing listeners
+	 * @private
+	 */
+	_onRotateMouseUp(event) {
+		event.preventDefault();
+		window.removeEventListener(...this.handlers.rotateMove);
+		window.removeEventListener(...this.handlers.rotateUp);
+		//this.app._onRotate(event);
 	}
 
 	removeListeners() {
@@ -510,6 +615,11 @@ class DraggableElement extends Draggable {
 			this.handle.removeEventListener(...this.handlers.resizeDown);
 			this.handle.classList.remove('resizable');
 			this.handle.querySelector('.window-resizable-handle').remove();
+		}
+		if (this.handle.classList.contains('rotatable')) {
+			this.handle.removeEventListener(...this.handlers.rotateDown);
+			this.handle.classList.remove('rotatable');
+			this.handle.querySelector('.window-rotation-handle').remove();
 		}
 	}
 

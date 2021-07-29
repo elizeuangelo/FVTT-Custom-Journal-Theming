@@ -8,10 +8,10 @@
     {{/if}}
     <section>
         <form autocomplete="off" class="editable">
-            <div class="background-image" style="opacity:{{opacity}}">
+            <div class="background-image" style="opacity:{{opacity}}; transform: rotate({{imgRotation}}deg)">
                 <img src="{{img}}">
             </div>
-            <div id="editor" style="color:{{textcolor}}; transform: rotate({{rotation}}deg)">
+            <div id="editor" style="color:{{textcolor}}; transform: rotate({{editorRotation}}deg)">
                 {{editor content=data.content target="content" button=true editable=editable owner=owner}}
             </div>
         </form>
